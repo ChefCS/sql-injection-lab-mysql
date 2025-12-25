@@ -1,0 +1,31 @@
+version: '3.8'
+services:
+  app:
+    build: .
+    ports:
+      - "8080:80"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - sqli-network
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: vulnerable_db
+    ports:
+      - "3306:3306"  # Optional, for external tools
+    volumes:
+      - ./schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      timeout: 20s
+      retries: 10
+    networks:
+      - sqli-network
+
+networks:
+  sqli-network:
+    driver: bridge
